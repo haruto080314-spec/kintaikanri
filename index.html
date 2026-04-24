@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>打刻.システム</title>
+<style>
+:root{
+  --b50:#EFF6FF;--b100:#DBEAFE;--b200:#BFDBFE;--b300:#93C5FD;
+  --b500:#3B82F6;--b600:#2563EB;--b700:#1D4ED8;--b800:#1E40AF;--b900:#1E3A8A;
+  --g:#10B981;--gd:#059669;--r:#EF4444;--rd:#DC2626;--am:#F59E0B;--amd:#D97706;
+  --bg:#F0F7FF;--sf:#FFFFFF;--sf2:#F8FAFF;
+  --br:#DBEAFE;--br2:#BFDBFE;
+  --tx:#0F172A;--tx2:#475569;--tx3:#94A3B8;
+  --ra:12px;--rsm:8px;--rlg:16px;
+  --sh:0 2px 8px rgba(37,99,235,.1),0 8px 24px rgba(37,99,235,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;padding:1.25rem .875rem;-webkit-text-size-adjust:100%}
+.wrap{width:100%;max-width:440px}
+.sc{display:none;animation:fi .2s ease}
+.sc.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.logo{font-size:22px;font-weight:700;color:var(--b800);letter-spacing:-.04em;margin-bottom:1.25rem;padding-bottom:.875rem;border-bottom:2px solid var(--b200);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.logo-ac{color:#38BDF8}
+.logo-bd{margin-left:auto;font-size:10px;font-weight:700;background:var(--b100);color:var(--b800);padding:3px 10px;border-radius:99px;white-space:nowrap}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:var(--rlg);padding:1.25rem;margin-bottom:.75rem;box-shadow:var(--sh)}
+label{font-size:12px;color:var(--tx2);display:block;margin-bottom:4px;margin-top:11px;font-weight:600}
+label:first-child{margin-top:0}
+input[type=text],input[type=password],input[type=email],select,textarea{width:100%;padding:10px 12px;font-size:15px;border:1.5px solid var(--br2);border-radius:var(--rsm);background:var(--sf2);color:var(--tx);outline:none;font-family:inherit;transition:all .15s;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.15);background:var(--sf)}
+textarea{min-height:68px;resize:vertical;font-size:14px}
+select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.btn{width:100%;padding:12px;font-size:15px;font-weight:700;border-radius:var(--ra);cursor:pointer;border:1.5px solid var(--br2);background:var(--sf2);color:var(--tx);margin-top:.75rem;transition:all .15s;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(0.97)}
+.bp{background:var(--b600);color:#fff;border-color:var(--b700);box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.bp:hover{background:var(--b700)}
+.bg{background:var(--g);color:#fff;border-color:var(--gd)}
+.bg:hover{background:var(--gd)}
+.bd{background:var(--r);color:#fff;border-color:var(--rd)}
+.bo{background:transparent;border:1.5px solid var(--b300);color:var(--b600)}
+.bo:hover{background:var(--b50)}
+.bsm{width:auto;padding:6px 12px;font-size:12px;margin-top:0;border-radius:6px;font-weight:600}
+.blk{background:none;border:none;font-size:13px;color:var(--b500);cursor:pointer;text-decoration:underline;font-family:inherit;padding:0}
+.err{font-size:13px;color:#b91c1c;background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--rsm);padding:9px 12px;margin-top:8px;display:none;line-height:1.6;word-break:keep-all}
+.err.on{display:block}
+.slb{font-size:11px;font-weight:700;color:var(--b600);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.slb::before{content:'';display:block;width:3px;height:11px;background:var(--b500);border-radius:2px;flex-shrink:0}
+.tabs{display:flex;gap:3px;margin-bottom:1.25rem;background:var(--b100);border-radius:var(--ra);padding:3px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{flex:1;padding:8px 4px;font-size:11px;border:none;background:none;border-radius:var(--rsm);cursor:pointer;color:var(--b600);font-weight:500;transition:all .15s;font-family:inherit;white-space:nowrap;min-width:48px}
+.tab.on{background:var(--sf);color:var(--b800);box-shadow:0 1px 4px rgba(37,99,235,.12);font-weight:700}
+.srow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--br)}
+.srow:last-child{border-bottom:none}
+.av{width:40px;height:40px;border-radius:50%;background:var(--b100);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--b700);flex-shrink:0;overflow:hidden;border:2px solid var(--b200)}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.si{flex:1;min-width:0}
+.sn{font-size:14px;font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sid{font-size:11px;color:var(--tx3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* アクティブカード */
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acard{background:var(--sf2);border:1px solid var(--br);border-radius:var(--ra);padding:10px 12px}
+.acard.ain{border-color:#6EE7B7;background:#ECFDF5}
+.acard.aout{border-color:#FCA5A5;background:#FEF2F2}
+.acard.aoff{border-color:var(--br);background:var(--sf2)}
+.anm{font-size:13px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ast{font-size:11px;margin-top:3px;display:flex;align-items:center;gap:4px}
+.atm{font-size:11px;color:var(--tx3);margin-top:2px;font-variant-numeric:tabular-nums}
+/* シフトカード（ユーザー画面） */
+.shift-today-card{background:linear-gradient(135deg,var(--b50),#F0F7FF);border:1px solid var(--b200);border-radius:var(--ra);padding:12px 14px;margin-bottom:.75rem}
+.shift-today-title{font-size:11px;font-weight:700;color:var(--b600);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+.shift-member-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--b200);font-size:13px}
+.shift-member-row:last-child{border-bottom:none}
+/* ユーザーヘッダー */
+.uhdr{display:flex;align-items:center;gap:12px;margin-bottom:1rem;padding:1rem 1.25rem;background:var(--sf);border:1px solid var(--br);border-radius:var(--rlg);box-shadow:var(--sh)}
+.uav{width:46px;height:46px;border-radius:50%;background:var(--b100);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--b700);flex-shrink:0;border:2px solid var(--b300);overflow:hidden}
+.uav img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* 時計 */
+.clkw{text-align:center;padding:1.5rem 1rem 1.25rem;background:linear-gradient(135deg,var(--b600),var(--b900));border-radius:var(--ra);margin-bottom:1.25rem;position:relative;overflow:hidden}
+.clkw::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.07)}
+.clkw::after{content:'';position:absolute;bottom:-25px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.05)}
+.clk{font-size:46px;font-weight:200;color:#fff;letter-spacing:.02em;font-variant-numeric:tabular-nums;line-height:1;position:relative}
+.clkd{font-size:13px;color:rgba(255,255,255,.65);margin-top:6px;position:relative}
+/* 打刻ボタン */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.pbtn{padding:20px 8px;font-size:14px;font-weight:700;border-radius:var(--ra);cursor:pointer;border:1.5px solid var(--br);background:var(--sf);color:var(--tx);transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:inherit;box-shadow:0 2px 8px rgba(37,99,235,.07);-webkit-tap-highlight-color:transparent;word-break:keep-all}
+.pbtn:active{transform:scale(0.95)}
+.pbtn.dis{opacity:.3;cursor:default;pointer-events:none}
+.pic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px}
+.pin{background:var(--b100);color:var(--b600)}
+.pot{background:#FEE2E2;color:var(--r)}
+.pea{background:#FEF3C7;color:var(--am)}
+.pfl{grid-column:1/-1}
+/* ステータス */
+.strow{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dn{background:var(--tx3)}
+.di{background:var(--g);box-shadow:0 0 0 3px rgba(16,185,129,.2)}
+.do{background:var(--r)}
+.de{background:var(--am)}
+/* ログ */
+.logi{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--br);font-size:14px}
+.logi:last-child{border-bottom:none}
+/* お知らせバナー */
+.nb{border-radius:var(--ra);padding:12px 14px;margin-bottom:.75rem;line-height:1.7;word-break:keep-all}
+.nfix{background:linear-gradient(135deg,#FEF3C7,#FFFBEB);border:1px solid #FCD34D}
+.ntim{background:linear-gradient(135deg,var(--b50),#F0F7FF);border:1px solid var(--b200)}
+.ntitle{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.nto{font-size:14px;font-weight:700;margin-bottom:4px}
+.nbody{font-size:14px;white-space:pre-wrap;word-break:keep-all}
+/* メッセージ行 */
+.mrow{padding:10px 0;border-bottom:1px solid var(--br);font-size:13px}
+.mrow:last-child{border-bottom:none}
+.mmeta{font-size:11px;color:var(--tx3);margin-bottom:4px;display:flex;gap:8px;flex-wrap:wrap}
+.mbody{color:var(--tx);line-height:1.6;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;word-break:keep-all}
+/* シフト行 */
+.shrow{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--br);font-size:13px}
+.shrow:last-child{border-bottom:none}
+.empty{font-size:13px;color:var(--tx3);padding:6px 0}
+/* モーダル */
+.mo{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:500;padding:1rem;backdrop-filter:blur(4px)}
+.mo.hid{display:none}
+.mbox{background:var(--sf);border-radius:var(--rlg);padding:1.75rem 1.5rem;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(15,23,42,.2);animation:pop .22s cubic-bezier(.34,1.56,.64,1)}
+.mboxl{text-align:left}
+@keyframes pop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+.mico{font-size:48px;margin-bottom:.75rem;line-height:1}
+.mttl{font-size:22px;font-weight:700;color:var(--tx);margin-bottom:.5rem}
+.mmsg{font-size:14px;color:var(--tx2);line-height:1.7;margin-bottom:.75rem;word-break:keep-all;white-space:pre-wrap}
+.mwarn{background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--rsm);padding:11px 13px;margin-bottom:1rem;font-size:13px;color:#b91c1c;font-weight:600;line-height:1.7;white-space:pre-wrap;word-break:keep-all;text-align:left;display:none}
+.mtim{font-size:13px;color:var(--tx3);margin-bottom:1.25rem;font-variant-numeric:tabular-nums}
+/* 次回出勤モーダル */
+.next-shift-box{background:linear-gradient(135deg,var(--b600),var(--b800));border-radius:var(--ra);padding:14px 16px;margin-bottom:1rem;text-align:left;position:relative;overflow:hidden}
+.next-shift-box::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.08)}
+.next-shift-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.next-shift-date{font-size:18px;font-weight:700;color:#fff;margin-bottom:2px}
+.next-shift-time{font-size:20px;font-weight:200;color:#fff;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.next-shift-dow{font-size:12px;color:rgba(255,255,255,0.65);margin-top:4px}
+/* カウントダウン */
+.countdown-ring{font-size:32px;font-weight:700;color:var(--r);margin:8px 0}
+/* アバターアップロード */
+.avup{width:72px;height:72px;border-radius:50%;background:var(--b50);border:2px dashed var(--b300);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:all .15s;flex-shrink:0}
+.avup img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.avlb{font-size:10px;color:var(--b400);margin-top:2px;text-align:center;line-height:1.2}
+.gnote{font-size:12px;color:var(--tx2);background:var(--b50);border:1px solid var(--br);border-radius:var(--rsm);padding:10px 12px;line-height:1.7;margin-top:8px;word-break:keep-all}
+.gnote code{background:var(--b100);color:var(--b800);padding:1px 5px;border-radius:4px;font-size:11px;font-family:monospace}
+/* トースト */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(12px);background:var(--b700);color:#fff;border-radius:var(--ra);padding:10px 20px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(37,99,235,.4);max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.bdf{background:#FEF3C7;color:#92400E;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700}
+.bdt{background:var(--b100);color:var(--b800);font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700}
+.tsgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ======== ログイン ======== -->
+<div class="sc on" id="sc-login">
+  <div class="logo">打刻<span class="logo-ac">.</span>システム</div>
+
+  <!-- アクティブ状況ボード（ログイン前） -->
+  <div class="card" style="padding:1rem;margin-bottom:.75rem">
+    <div class="slb" style="margin-bottom:.75rem">本日の出勤状況</div>
+    <div id="login-active-board"></div>
+    <div style="font-size:11px;color:var(--tx3);text-align:right;margin-top:6px" id="login-board-time"></div>
+  </div>
+
+  <div class="card">
+    <div class="slb">スタッフログイン</div>
+    <label>ログインID（6桁）</label>
+    <input type="text" id="li" maxlength="6" placeholder="000000" inputmode="numeric" autocomplete="off">
+    <label>パスワード</label>
+    <input type="password" id="lp" placeholder="パスワードを入力" autocomplete="off">
+    <div class="err" id="lerr">IDまたはパスワードが正しくありません</div>
+    <button class="btn bp" onclick="doLogin()">ログイン</button>
+  </div>
+  <div style="text-align:center;margin-top:.5rem">
+    <button class="blk" onclick="show('sc-alogin')">管理者ログインはこちら</button>
+  </div>
+</div>
+
+<!-- ======== 管理者ログイン ======== -->
+<div class="sc" id="sc-alogin">
+  <div class="logo">打刻<span class="logo-ac">.</span>システム</div>
+  <div class="card">
+    <div class="slb">管理者ログイン</div>
+    <label>管理者パスワード</label>
+    <input type="password" id="ap" placeholder="管理者パスワードを入力" autocomplete="off">
+    <div class="err" id="aerr">パスワードが正しくありません</div>
+    <button class="btn bp" onclick="doAdminLogin()">管理者として入る</button>
+    <button class="btn" onclick="show('sc-login')">← スタッフログインに戻る</button>
+  </div>
+</div>
+
+<!-- ======== 管理者画面 ======== -->
+<div class="sc" id="sc-admin">
+  <div class="logo">打刻<span class="logo-ac">.</span>システム <span class="logo-bd">管理者</span></div>
+  <div class="tabs">
+    <button class="tab on" onclick="atab(this,'ta-active')">出勤状況</button>
+    <button class="tab" onclick="atab(this,'ta-staff')">スタッフ</button>
+    <button class="tab" onclick="atab(this,'ta-msg')">お知らせ</button>
+    <button class="tab" onclick="atab(this,'ta-shift')">シフト</button>
+    <button class="tab" onclick="atab(this,'ta-settings')">設定</button>
+  </div>
+
+  <!-- 出勤状況 -->
+  <div id="ta-active">
+    <div class="slb">本日の出勤状況</div>
+    <div id="active-wrap"></div>
+    <div class="slb" style="margin-top:1rem">本日のシフト予定</div>
+    <div id="admin-shift-today"></div>
+    <button class="btn bo" onclick="renderActive();renderAdminShiftToday()" style="margin-top:.5rem">更新する</button>
+  </div>
+
+  <!-- スタッフ管理 -->
+  <div id="ta-staff" style="display:none">
+    <div class="slb">スタッフ一覧</div>
+    <div class="card" id="slist"></div>
+    <div class="slb" style="margin-top:.75rem">新規登録</div>
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:.75rem">
+        <div>
+          <div class="avup" id="nav-wrap" onclick="document.getElementById('nav-in').click()">
+            <span style="font-size:22px;color:var(--b400)">+</span>
+            <span class="avlb">写真を<br>追加</span>
+          </div>
+          <input type="file" id="nav-in" accept="image/*" style="display:none" onchange="prevAv(this,'nav-wrap','nav-data')">
+          <input type="hidden" id="nav-data">
+        </div>
+        <div style="flex:1">
+          <label style="margin-top:0">氏名</label>
+          <input type="text" id="nn" placeholder="山田 太郎">
+          <label>ログインID（6桁数字）</label>
+          <input type="text" id="ni" maxlength="6" placeholder="000004" inputmode="numeric">
+        </div>
+      </div>
+      <label>パスワード</label>
+      <input type="password" id="np" placeholder="パスワードを設定">
+      <label>メールアドレス（通知用）</label>
+      <input type="email" id="ne" placeholder="staff@example.com">
+      <div class="err" id="naerr"></div>
+      <button class="btn bg" onclick="addStaff()">スタッフを登録する</button>
+    </div>
+  </div>
+
+  <!-- お知らせ -->
+  <div id="ta-msg" style="display:none">
+    <div class="slb">お知らせ登録</div>
+    <div class="card">
+      <label>対象スタッフ</label>
+      <select id="msg-tgt">
+        <option value="">スタッフを選択...</option>
+        <option value="ALL">▶ 全員に送信</option>
+      </select>
+      <label>表示タイプ</label>
+      <select id="msg-type" onchange="toggleMsgDate()">
+        <option value="fixed">固定表示（常に表示）</option>
+        <option value="timed">期間指定（期限で自動非表示）</option>
+      </select>
+      <div id="msg-dates" style="display:none">
+        <label>表示開始日（YYYY-MM-DD）</label>
+        <input type="text" id="msg-from" placeholder="2026-04-24">
+        <label>表示終了日（YYYY-MM-DD）</label>
+        <input type="text" id="msg-to" placeholder="2026-04-30">
+      </div>
+      <label>メッセージ内容</label>
+      <textarea id="msg-body" placeholder="連絡事項を入力..."></textarea>
+      <div class="err" id="merr"></div>
+      <button class="btn bg" onclick="addMsg(false)">登録する</button>
+      <button class="btn bo" style="margin-top:.5rem" onclick="addMsg(true)">全員に一括登録</button>
+    </div>
+    <div class="slb" style="margin-top:.75rem">登録済みお知らせ</div>
+    <div class="card" id="mlist"></div>
+  </div>
+
+  <!-- シフト管理 -->
+  <div id="ta-shift" style="display:none">
+
+    <!-- サブタブ -->
+    <div style="display:flex;gap:4px;margin-bottom:1rem">
+      <button class="btn bo bsm" id="shtab-cal" onclick="shSubTab('cal')" style="flex:1;padding:8px 4px;font-size:12px;background:var(--b600);color:#fff;border-color:var(--b700)">📅 カレンダー</button>
+      <button class="btn bo bsm" id="shtab-quick" onclick="shSubTab('quick')" style="flex:1;padding:8px 4px;font-size:12px">⚡ 簡易登録</button>
+      <button class="btn bo bsm" id="shtab-csv" onclick="shSubTab('csv')" style="flex:1;padding:8px 4px;font-size:12px">📥 CSV</button>
+    </div>
+
+    <!-- カレンダービュー -->
+    <div id="sh-pane-cal">
+      <div class="card" style="padding:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <button class="btn bo bsm" onclick="shiftMonthOffset(-1)" style="margin-top:0">◀</button>
+          <span id="shift-month-label" style="font-size:14px;font-weight:700;color:var(--b800)"></span>
+          <button class="btn bo bsm" onclick="shiftMonthOffset(1)" style="margin-top:0">▶</button>
+        </div>
+        <!-- カレンダーグリッド -->
+        <div id="shift-cal-grid" style="margin-bottom:.75rem"></div>
+        <!-- 選択日のシフト詳細 -->
+        <div id="shift-day-detail" style="display:none;border-top:1px solid var(--br);padding-top:.75rem;margin-top:.5rem">
+          <div style="font-size:13px;font-weight:700;color:var(--b800);margin-bottom:.5rem" id="shift-detail-date"></div>
+          <div id="shift-detail-list" style="margin-bottom:.75rem"></div>
+          <div class="slb" style="margin-bottom:.5rem">この日にシフト追加</div>
+          <select id="sh-staff" style="margin-bottom:8px"><option value="">スタッフを選択...</option></select>
+          <div class="tsgrid">
+            <div><label style="margin-top:0">出勤予定</label><select id="sh-in"></select></div>
+            <div><label style="margin-top:0">退勤予定</label><select id="sh-out"></select></div>
+          </div>
+          <div class="err" id="sherr"></div>
+          <button class="btn bg" onclick="addShiftFromCal()" style="margin-top:.5rem">この日に登録</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 簡易登録 -->
+    <div id="sh-pane-quick" style="display:none">
+      <div class="card">
+        <div class="slb" style="margin-bottom:.75rem">簡易シフト一括登録</div>
+        <label style="margin-top:0">スタッフ</label>
+        <select id="sq-staff"><option value="">スタッフを選択...</option></select>
+        <label>対象期間</label>
+        <div class="tsgrid">
+          <div><label style="margin-top:0">開始日</label><input type="text" id="sq-from" placeholder="2026-05-01"></div>
+          <div><label style="margin-top:0">終了日</label><input type="text" id="sq-to" placeholder="2026-05-31"></div>
+        </div>
+        <label>出勤曜日</label>
+        <div id="sq-days" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="1" checked style="width:14px;height:14px;accent-color:var(--b600)"> 月
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="2" checked style="width:14px;height:14px;accent-color:var(--b600)"> 火
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="3" checked style="width:14px;height:14px;accent-color:var(--b600)"> 水
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="4" checked style="width:14px;height:14px;accent-color:var(--b600)"> 木
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="5" checked style="width:14px;height:14px;accent-color:var(--b600)"> 金
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="6" style="width:14px;height:14px;accent-color:var(--b600)"> 土
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px;font-size:13px;background:var(--sf2);border:1.5px solid var(--br2);border-radius:6px;padding:6px 10px;cursor:pointer">
+            <input type="checkbox" value="0" style="width:14px;height:14px;accent-color:var(--b600)"> 日
+          </label>
+        </div>
+        <div class="tsgrid" style="margin-top:8px">
+          <div><label style="margin-top:0">出勤時刻</label><select id="sq-in"></select></div>
+          <div><label style="margin-top:0">退勤時刻</label><select id="sq-out"></select></div>
+        </div>
+        <div class="err" id="sqerr"></div>
+        <button class="btn bg" onclick="quickRegisterShift()">一括登録する</button>
+        <div style="font-size:12px;color:var(--tx3);margin-top:6px;line-height:1.6">選択した曜日に指定期間のシフトをまとめて登録します。既存の同日シフトは上書きされます。</div>
+      </div>
+    </div>
+
+    <!-- CSV -->
+    <div id="sh-pane-csv" style="display:none">
+      <div class="card" style="padding:1.25rem">
+        <div class="slb" style="margin-bottom:.5rem">CSVで一括インポート</div>
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:.75rem;line-height:1.7;word-break:keep-all">
+          ヘッダー行不要・UTF-8<br>
+          <code style="background:var(--b50);padding:2px 6px;border-radius:4px;font-size:11px">スタッフID,日付,出勤,退勤</code><br>
+          例: <code style="background:var(--b50);padding:2px 6px;border-radius:4px;font-size:11px">000001,2026-04-25,09:00,18:00</code>
+        </div>
+        <input type="file" id="sh-csv" accept=".csv" onchange="importCSV(this)" style="font-size:13px;width:100%;border:1.5px solid var(--br2);border-radius:var(--rsm);padding:9px;background:var(--sf2);color:var(--tx)">
+      </div>
+    </div>
+  </div>
+
+  <!-- 設定 -->
+  <div id="ta-settings" style="display:none">
+    <div class="slb">GAS / スプレッドシート連携</div>
+    <div class="card">
+      <label>GAS WebアプリURL</label>
+      <input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/...">
+      <div class="gnote">デプロイURLを貼り付けると打刻データが自動でスプレッドシートに記録されます。</div>
+      <button class="btn bo" onclick="testGAS()" style="margin-top:.75rem;font-size:13px">接続テスト</button>
+      <div id="gas-test-result" style="font-size:12px;margin-top:6px;display:none;padding:8px;border-radius:var(--rsm)"></div>
+    </div>
+    <div class="slb" style="margin-top:.75rem">Gmailシフトズレ通知</div>
+    <div class="card">
+      <label>通知先メールアドレス（管理者）</label>
+      <input type="email" id="ntf-email" placeholder="admin@example.com">
+      <label>ズレ許容時間（分）</label>
+      <input type="text" id="ntf-tol" placeholder="15" inputmode="numeric">
+      <div class="gnote">シフトとのズレが許容時間を超えた場合、管理者とスタッフへGmailで通知します。</div>
+    </div>
+    <div class="slb" style="margin-top:.75rem">管理者パスワード変更</div>
+    <div class="card">
+      <label>新しいパスワード</label>
+      <input type="password" id="new-apass" placeholder="新しいパスワードを入力">
+    </div>
+    <button class="btn bg" onclick="saveSettings()">設定を保存する</button>
+    <div id="save-ok" style="font-size:13px;color:var(--g);margin-top:8px;display:none;text-align:center;font-weight:600">✓ 設定を保存しました</div>
+  </div>
+
+  <button class="btn" style="margin-top:.5rem" onclick="adminLogout()">ログアウト</button>
+</div>
+
+<!-- ======== 打刻画面 ======== -->
+<div class="sc" id="sc-punch">
+  <div class="uhdr">
+    <div class="uav" id="uav"></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:16px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="uname"></div>
+      <div class="strow"><span class="dot dn" id="udot"></span><span id="utxt">未打刻</span></div>
+    </div>
+    <button class="btn bsm" onclick="staffLogout()" style="color:var(--tx2);flex-shrink:0">退出</button>
+  </div>
+
+  <!-- 本日のお知らせ -->
+  <div id="u-notice"></div>
+
+  <!-- 本日の出勤予定メンバーとアクティブ状況 -->
+  <div id="u-today-info"></div>
+
+  <div class="card">
+    <div class="clkw">
+      <div class="clk" id="clk">--:--:--</div>
+      <div class="clkd" id="clkd"></div>
+    </div>
+    <div class="pgrid">
+      <button class="pbtn" id="btn-in" onclick="openPModal('出勤')">
+        <div class="pic pin">▶</div><span>出勤</span>
+      </button>
+      <button class="pbtn" id="btn-out" onclick="openPModal('退勤')">
+        <div class="pic pot">■</div><span>退勤</span>
+      </button>
+      <button class="pbtn pfl" id="btn-early" onclick="openPModal('早退')">
+        <div class="pic pea">◀</div><span>早退</span>
+      </button>
+    </div>
+    <div class="slb">本日のログ</div>
+    <div id="ulog"><div class="empty">打刻記録はありません</div></div>
+  </div>
+</div>
+
+<!-- ======== 打刻確認モーダル ======== -->
+<div class="mo hid" id="mo-punch">
+  <div class="mbox">
+    <div class="mico" id="mp-ico">🌅</div>
+    <div class="mttl" id="mp-ttl">出勤</div>
+    <div class="mmsg" id="mp-msg"></div>
+    <div class="mwarn" id="mp-warn"></div>
+    <div class="mtim" id="mp-tim"></div>
+    <button class="btn bp" onclick="execPunch()">打刻する</button>
+    <button class="btn" onclick="closeMo('mo-punch')" style="margin-top:.5rem">キャンセル</button>
+  </div>
+</div>
+
+<!-- ======== 退勤後：次回出勤モーダル ======== -->
+<div class="mo hid" id="mo-logout">
+  <div class="mbox">
+    <div class="mico">👋</div>
+    <div class="mttl" id="ml-ttl">お疲れ様でした！</div>
+    <div class="mmsg" id="ml-msg" style="margin-bottom:.75rem"></div>
+    <div id="ml-next" style="display:none">
+      <div class="next-shift-box">
+        <div class="next-shift-label">📅 次回の出勤予定</div>
+        <div class="next-shift-date" id="ml-next-date"></div>
+        <div class="next-shift-time" id="ml-next-time"></div>
+        <div class="next-shift-dow" id="ml-next-dow"></div>
+      </div>
+    </div>
+    <div class="countdown-ring" id="ml-count">3</div>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:.5rem">秒後に自動ログアウトします</div>
+  </div>
+</div>
+
+<!-- ======== スタッフ編集モーダル ======== -->
+<div class="mo hid" id="mo-edit">
+  <div class="mbox mboxl">
+    <div style="font-size:16px;font-weight:700;color:var(--tx);margin-bottom:1.25rem">スタッフ情報を編集</div>
+    <input type="hidden" id="edit-idx">
+    <div style="display:flex;justify-content:center;margin-bottom:1rem">
+      <div class="avup" id="eav-wrap" onclick="document.getElementById('eav-in').click()">
+        <span style="font-size:22px;color:var(--b400)">+</span>
+        <span class="avlb">写真を変更</span>
+      </div>
+      <input type="file" id="eav-in" accept="image/*" style="display:none" onchange="prevAv(this,'eav-wrap','eav-data')">
+      <input type="hidden" id="eav-data">
+    </div>
+    <label style="margin-top:0">パスワード変更（空欄で変更なし）</label>
+    <input type="password" id="ep" placeholder="新しいパスワード">
+    <label>メールアドレス</label>
+    <input type="email" id="ee" placeholder="staff@example.com">
+    <button class="btn bp" onclick="saveEdit()">保存する</button>
+    <button class="btn" onclick="closeMo('mo-edit')" style="margin-top:.5rem">キャンセル</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK = 'kintai_v6';
+let shiftViewOffset = 0;
+
+function defDB(){
+  return {
+    adminPass:'admin1234', gasUrl:'', notifyEmail:'', notifyTolerance:'15',
+    staff:[
+      {id:'000001',name:'山田 太郎',pass:'pass01',email:'',avatar:''},
+      {id:'000002',name:'鈴木 花子',pass:'pass02',email:'',avatar:''},
+      {id:'000003',name:'田中 健二',pass:'pass03',email:'',avatar:''}
+    ],
+    messages:[], shifts:[], logs:{}
+  };
+}
+function loadDB(){try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return defDB();}
+function saveDB(){try{localStorage.setItem(SK,JSON.stringify(DB));}catch(e){}}
+
+let DB=loadDB(), me=null, pendingPunch=null, clkIv=null, logoutIv=null;
+
+// ★ pad を最初に定義（他の関数より前）
+function pad(n){return String(n).padStart(2,'0');}
+function today(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fmtDate(s){const p=s.split('-');return p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日';}
+function nowHMS(){const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());}
+function nowHM(){const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes());}
+function t2m(t){const p=String(t).substring(0,5).split(':');return parseInt(p[0]||0)*60+parseInt(p[1]||0);}
+
+function show(id){document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
+function toast(msg,d=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),d);}
+function closeMo(id){document.getElementById(id).classList.add('hid');}
+function openMo(id){document.getElementById(id).classList.remove('hid');}
+
+function prevAv(inp,wid,did){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{document.getElementById(wid).innerHTML=`<img src="${e.target.result}">`;document.getElementById(did).value=e.target.result;};
+  r.readAsDataURL(f);
+}
+function setAv(el,s){
+  if(s.avatar) el.innerHTML=`<img src="${s.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  else el.innerHTML=`<span style="font-size:15px;font-weight:700;color:var(--b700)">${s.name.charAt(0)}</span>`;
+}
+
+function toggleMsgDate(){
+  document.getElementById('msg-dates').style.display=document.getElementById('msg-type').value==='timed'?'block':'none';
+}
+
+/* ---- ログイン ---- */
+function doLogin(){
+  const id=document.getElementById('li').value.trim();
+  const pw=document.getElementById('lp').value;
+  const s=DB.staff.find(x=>x.id===id&&x.pass===pw);
+  const e=document.getElementById('lerr');
+  if(!s){e.classList.add('on');return;}
+  e.classList.remove('on'); me=s; enterPunch();
+}
+function doAdminLogin(){
+  const pw=document.getElementById('ap').value;
+  const e=document.getElementById('aerr');
+  if(pw!==DB.adminPass){e.classList.add('on');return;}
+  e.classList.remove('on'); refreshAdmin(); show('sc-admin');
+}
+function adminLogout(){document.getElementById('ap').value='';show('sc-login');}
+function staffLogout(){
+  me=null; clearInterval(clkIv); clearInterval(logoutIv);
+  document.getElementById('li').value='';
+  document.getElementById('lp').value='';
+  show('sc-login');
+}
+
+/* ---- 打刻画面 ---- */
+function enterPunch(){
+  document.getElementById('uname').textContent=me.name;
+  setAv(document.getElementById('uav'),me);
+  const td=today();
+  // お知らせ
+  const msgs=DB.messages.filter(m=>{
+    if(m.target!==me.id&&m.target!=='ALL') return false;
+    if(m.type==='fixed') return true;
+    return td>=m.dateFrom&&td<=m.dateTo;
+  });
+  document.getElementById('u-notice').innerHTML=msgs.map(m=>{
+    const cls=m.type==='fixed'?'nfix':'ntim';
+    const col=m.type==='fixed'?'#92400E':'var(--b800)';
+    const to=m.target==='ALL'?'みなさんへ':`${me.name}さんへ`;
+    return `<div class="nb ${cls}">
+      <div class="ntitle" style="color:${col}">📢 本日のお知らせ</div>
+      <div class="nto" style="color:${col}">${to}</div>
+      <div class="nbody" style="color:${m.type==='fixed'?'#78350F':'var(--b900)'}">${m.content}</div>
+    </div>`;
+  }).join('');
+  // 本日の出勤予定＋アクティブ状況
+  renderUserTodayInfo();
+  document.getElementById('clkd').textContent=fmtDate(td);
+  updStatus(); rendLog(); startClk(); show('sc-punch');
+}
+
+/* ユーザー画面：本日の出勤予定メンバーとアクティブ状況 */
+function renderUserTodayInfo(){
+  const td=today();
+  const todayShifts=DB.shifts.filter(s=>s.date===td);
+  const wrap=document.getElementById('u-today-info');
+  let html='';
+  // 本日シフトがあるメンバー
+  if(todayShifts.length>0){
+    html+=`<div class="shift-today-card">
+      <div class="shift-today-title">📋 本日の出勤予定メンバー</div>`;
+    todayShifts.forEach(sh=>{
+      const st=DB.staff.find(x=>x.id===sh.staffId);
+      if(!st) return;
+      const key=st.id+'_'+td;
+      const logs=DB.logs[key]||[];
+      const last=logs.length?logs[logs.length-1]:null;
+      const av=st.avatar?`<img src="${st.avatar}" style="width:26px;height:26px;border-radius:50%;object-fit:cover">`:`<div style="width:26px;height:26px;border-radius:50%;background:var(--b100);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--b700)">${st.name.charAt(0)}</div>`;
+      let statusBadge='<span style="font-size:11px;color:var(--tx3)">未打刻</span>';
+      if(last){
+        if(last.type==='出勤') statusBadge='<span style="font-size:11px;color:var(--g);font-weight:700">● 出勤中</span>';
+        else if(last.type==='退勤') statusBadge='<span style="font-size:11px;color:var(--r);font-weight:700">■ 退勤済</span>';
+        else statusBadge='<span style="font-size:11px;color:var(--am);font-weight:700">◀ 早退済</span>';
+      }
+      html+=`<div class="shift-member-row">
+        ${av}
+        <span style="font-size:13px;font-weight:600;color:var(--tx);flex:1">${st.name}</span>
+        <span style="font-size:11px;color:var(--tx3)">${sh.inTime}〜${sh.outTime}</span>
+        <span style="margin-left:8px">${statusBadge}</span>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  wrap.innerHTML=html;
+}
+
+function startClk(){
+  clearInterval(clkIv);
+  const t=()=>{const n=new Date();document.getElementById('clk').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());};
+  t(); clkIv=setInterval(t,1000);
+}
+
+function updStatus(){
+  const key=me.id+'_'+today();
+  const logs=DB.logs[key]||[];
+  const dot=document.getElementById('udot');
+  const txt=document.getElementById('utxt');
+  dot.className='dot';
+  if(!logs.length){dot.classList.add('dn');txt.textContent='未打刻';return;}
+  const last=logs[logs.length-1];
+  if(last.type==='出勤'){dot.classList.add('di');txt.textContent='出勤中';}
+  else if(last.type==='退勤'){dot.classList.add('do');txt.textContent='退勤済み';}
+  else{dot.classList.add('de');txt.textContent='早退済み';}
+}
+
+function logLabel(t){
+  if(t==='出勤') return '出勤しました。';
+  if(t==='退勤') return '退勤しました。';
+  return '早退します。';
+}
+function rendLog(){
+  const key=me.id+'_'+today();
+  const logs=DB.logs[key]||[];
+  const el=document.getElementById('ulog');
+  if(!logs.length){el.innerHTML='<div class="empty">打刻記録はありません</div>';return;}
+  el.innerHTML=logs.map(l=>`
+    <div class="logi">
+      <span style="font-weight:600;color:var(--tx)">${logLabel(l.type)}</span>
+      <span style="color:var(--tx3);font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:8px">${l.time}</span>
+    </div>`).join('');
+}
+
+/* ---- シフトズレチェック ---- */
+function checkDev(type){
+  const sh=DB.shifts.find(s=>s.staffId===me.id&&s.date===today());
+  if(!sh) return null;
+  const tol=parseInt(DB.notifyTolerance||'15',10);
+  const nowM=t2m(nowHM());
+  if(type==='出勤'){
+    const d=nowM-t2m(sh.inTime);
+    if(d>tol) return `遅刻にご注意ください\nシフト出勤予定: ${sh.inTime}\n現在時刻: ${nowHM()}（${d}分遅れ）`;
+  }
+  if(type==='退勤'||type==='早退'){
+    const d=nowM-t2m(sh.outTime);
+    if(d>tol) return `残業が発生しています\nシフト退勤予定: ${sh.outTime}\n現在時刻: ${nowHM()}（${d}分超過）`;
+    if(d<-tol) return `早退・早上がりです\nシフト退勤予定: ${sh.outTime}\n現在時刻: ${nowHM()}（${Math.abs(d)}分早い）`;
+  }
+  return null;
+}
+
+/* ---- 打刻モーダル ---- */
+function openPModal(type){
+  pendingPunch=type;
+  const ico={出勤:'🌅',退勤:'🌙',早退:'🌤'};
+  const msg={
+    出勤:`おはようございます。\n${me.name}さん、本日もよろしくお願いします！`,
+    退勤:`${me.name}さん、本日もありがとうございます。\nお疲れ様でした！`,
+    早退:`${me.name}さん、お疲れ様でした。\nゆっくり休んでください。`
+  };
+  document.getElementById('mp-ico').textContent=ico[type];
+  document.getElementById('mp-ttl').textContent=type;
+  document.getElementById('mp-msg').textContent=msg[type];
+  document.getElementById('mp-tim').textContent=fmtDate(today())+' '+nowHMS();
+  const warn=checkDev(type);
+  const we=document.getElementById('mp-warn');
+  if(warn){we.textContent='⚠️ '+warn;we.style.display='block';sendDevAlert(type,warn);}
+  else{we.style.display='none';}
+  openMo('mo-punch');
+}
+
+function execPunch(){
+  const key=me.id+'_'+today();
+  if(!DB.logs[key]) DB.logs[key]=[];
+  const t=nowHMS();
+  DB.logs[key].push({type:pendingPunch,time:t});
+  saveDB();
+  sendGAS({action:'punch',id:me.id,name:me.name,type:pendingPunch,date:today(),time:t,staff:DB.staff});
+  closeMo('mo-punch');
+  updStatus(); rendLog(); renderUserTodayInfo();
+  toast(logLabel(pendingPunch));
+  renderLoginBoard(); // ログインボードをリアルタイム更新
+  showLogoutModal(pendingPunch);
+}
+
+/* ---- 退勤後ログアウトモーダル（カウントダウン付き） ---- */
+function showLogoutModal(type){
+  const td=today();
+  const isOut=(type==='退勤'||type==='早退');
+  const futureShifts=DB.shifts.filter(s=>s.staffId===me.id&&s.date>td).sort((a,b)=>a.date<b.date?-1:1);
+  const next=isOut?(futureShifts[0]||null):null;
+  const ttl=type==='出勤'?'おはようございます！':type==='退勤'?'退勤しました。':'早退します。';
+  const msg=type==='出勤'
+    ?`${me.name}さん、本日もよろしくお願いします！\n出勤を記録しました。`
+    :type==='退勤'
+    ?`${me.name}さん、お疲れ様でした！\n本日もありがとうございました。`
+    :`${me.name}さん、お疲れ様でした。\nゆっくり休んでください。`;
+  document.getElementById('ml-ttl').textContent=ttl;
+  document.getElementById('ml-msg').textContent=msg;
+  const nextEl=document.getElementById('ml-next');
+  if(next){
+    const DOW=['日','月','火','水','木','金','土'];
+    const nd=new Date(next.date);
+    const dow=DOW[nd.getDay()];
+    const today_d=new Date(td);
+    const diff=Math.round((nd-today_d)/(1000*60*60*24));
+    const whenLabel=diff===1?'明日':diff===2?'明後日':diff+'日後';
+    // 日付ラベル：明日の場合は「明日」を強調
+    document.getElementById('ml-next-date').textContent=whenLabel+'　'+fmtDate(next.date)+'（'+dow+'）';
+    document.getElementById('ml-next-time').textContent=next.inTime+' 〜 '+next.outTime;
+    const dowEl=document.getElementById('ml-next-dow');
+    if(dowEl) dowEl.textContent='';
+    nextEl.style.display='block';
+  } else {
+    nextEl.style.display='none';
+  }
+  // 退勤は5秒、出勤・早退は3秒
+  let sec=type==='退勤'?5:3;
+  document.getElementById('ml-count').textContent=sec;
+  openMo('mo-logout');
+  clearInterval(logoutIv);
+  logoutIv=setInterval(()=>{
+    sec--;
+    document.getElementById('ml-count').textContent=sec;
+    if(sec<=0){
+      clearInterval(logoutIv);
+      closeMo('mo-logout');
+      staffLogout();
+    }
+  },1000);
+}
+
+/* ---- GAS連携 ---- */
+async function sendGAS(payload){
+  if(!DB.gasUrl){ console.warn('GAS URL未設定 - 設定タブでURLを保存してください'); return; }
+  const url = DB.gasUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
+  console.log('GAS送信開始:', payload.action, url.substring(0,80)+'...');
+  // 方法1: fetch (no-cors)
+  try{
+    await fetch(url, {method:'GET', mode:'no-cors'});
+    console.log('GAS fetch送信完了:', payload.action);
+  } catch(e){
+    console.warn('fetch失敗、Image方式で再試行:', e);
+    // 方法2: Image タグ（確実なCORSエラー回避）
+    try{
+      const img = new Image();
+      img.src = url;
+      console.log('GAS Image送信完了:', payload.action);
+    } catch(e2){ console.warn('GAS送信エラー:', e2); }
+  }
+}
+async function sendDevAlert(type,warn){
+  if(!DB.gasUrl) return;
+  const payload={action:'deviationAlert',id:me.id,name:me.name,email:me.email||'',type,warn,date:today(),time:nowHMS(),notifyEmail:DB.notifyEmail};
+  try{
+    const url = DB.gasUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
+    await fetch(url, {method:'GET', mode:'no-cors'});
+  } catch(e){}
+}
+
+/* ---- 管理者UI ---- */
+function refreshAdmin(){
+  renderActive(); renderAdminShiftToday();
+  renderStaff(); renderMsgList();
+  populateSels();
+  document.getElementById('gas-url').value=DB.gasUrl||'';
+  document.getElementById('ntf-email').value=DB.notifyEmail||'';
+  document.getElementById('ntf-tol').value=DB.notifyTolerance||'15';
+}
+
+async function testGAS(){
+  const url = document.getElementById('gas-url').value.trim();
+  const res_el = document.getElementById('gas-test-result');
+  res_el.style.display='block';
+  res_el.style.background='#FEF3C7';
+  res_el.style.border='1px solid #FCD34D';
+  res_el.style.color='#92400E';
+  res_el.textContent='接続中...';
+  if(!url){ res_el.textContent='URLを入力してください'; return; }
+  try{
+    const testUrl = url + '?data=' + encodeURIComponent(JSON.stringify({action:'test'}));
+    await fetch(testUrl, {method:'GET', mode:'no-cors'});
+    res_el.style.background='#ECFDF5';
+    res_el.style.border='1px solid #6EE7B7';
+    res_el.style.color='#065F46';
+    res_el.textContent='✓ GASに到達しました。スプレッドシートへの書き込みはGAS側のログで確認してください。';
+  } catch(e){
+    res_el.style.background='#FEF2F2';
+    res_el.style.border='1px solid #FECACA';
+    res_el.style.color='#b91c1c';
+    res_el.textContent='エラー: ' + e.message;
+  }
+}
+
+function saveSettings(){
+  const gasUrl=document.getElementById('gas-url').value.trim();
+  const email=document.getElementById('ntf-email').value.trim();
+  const tol=document.getElementById('ntf-tol').value.trim();
+  const newPass=document.getElementById('new-apass').value;
+  DB.gasUrl=gasUrl; DB.notifyEmail=email; DB.notifyTolerance=tol;
+  if(newPass){DB.adminPass=newPass;document.getElementById('new-apass').value='';}
+  saveDB();
+  const ok=document.getElementById('save-ok');
+  ok.style.display='block'; setTimeout(()=>ok.style.display='none',2500);
+}
+
+function populateSels(){
+  const base='<option value="">スタッフを選択...</option><option value="ALL">▶ 全員に送信</option>';
+  document.getElementById('msg-tgt').innerHTML=base+DB.staff.map(s=>`<option value="${s.id}">${s.name}（${s.id}）</option>`).join('');
+  document.getElementById('sh-staff').innerHTML='<option value="">スタッフを選択...</option>'+DB.staff.map(s=>`<option value="${s.id}">${s.name}（${s.id}）</option>`).join('');
+  document.getElementById('sq-staff').innerHTML='<option value="">スタッフを選択...</option>'+DB.staff.map(s=>`<option value="${s.id}">${s.name}（${s.id}）</option>`).join('');
+}
+
+/* ---- アクティブ状況（管理者） ---- */
+function renderActive(){
+  const td=today();
+  const wrap=document.getElementById('active-wrap');
+  if(!DB.staff.length){wrap.innerHTML='<div class="empty">スタッフ未登録</div>';return;}
+  wrap.innerHTML=`<div class="agrid">${DB.staff.map(s=>{
+    const key=s.id+'_'+td;
+    const logs=DB.logs[key]||[];
+    const last=logs.length?logs[logs.length-1]:null;
+    const inL=logs.find(l=>l.type==='出勤');
+    const outL=logs.find(l=>l.type==='退勤'||l.type==='早退');
+    let cls='aoff',stxt='未打刻',scol='color:var(--tx3)';
+    if(last){
+      if(last.type==='出勤'){cls='ain';stxt='出勤中';scol='color:var(--gd)';}
+      else if(last.type==='退勤'){cls='aout';stxt='退勤済';scol='color:var(--rd)';}
+      else{cls='aout';stxt='早退済';scol='color:var(--amd)';}
+    }
+    const av=s.avatar?`<img src="${s.avatar}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;margin-right:5px;flex-shrink:0">`:`<div style="width:26px;height:26px;border-radius:50%;background:var(--b100);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--b700);margin-right:5px;flex-shrink:0">${s.name.charAt(0)}</div>`;
+    return `<div class="acard ${cls}">
+      <div style="display:flex;align-items:center;margin-bottom:4px">${av}<span class="anm">${s.name}</span></div>
+      <div class="ast"><span class="dot ${cls==='ain'?'di':cls==='aout'?'do':'dn'}"></span><span style="${scol};font-size:12px;font-weight:600">${stxt}</span></div>
+      <div class="atm">${inL?'出勤: '+inL.time:''}${outL?' '+(outL.type==='退勤'?'退勤':'早退')+': '+outL.time:''}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderAdminShiftToday(){
+  const td=today();
+  const todayShifts=DB.shifts.filter(s=>s.date===td);
+  const el=document.getElementById('admin-shift-today');
+  if(!todayShifts.length){el.innerHTML='<div class="empty">本日のシフト登録なし</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:1rem">${todayShifts.map(sh=>{
+    const st=DB.staff.find(x=>x.id===sh.staffId);
+    const nm=st?st.name:sh.staffId;
+    const av=st&&st.avatar?`<img src="${st.avatar}" style="width:30px;height:30px;border-radius:50%;object-fit:cover">`:`<div style="width:30px;height:30px;border-radius:50%;background:var(--b100);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--b700)">${nm.charAt(0)}</div>`;
+    return `<div class="shrow">
+      <div class="av" style="width:30px;height:30px;min-width:30px">${av}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--tx)">${nm}</div>
+        <div style="font-size:11px;color:var(--tx3)">${sh.inTime} 〜 ${sh.outTime}</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ---- スタッフ ---- */
+function renderStaff(){
+  const el=document.getElementById('slist');
+  if(!DB.staff.length){el.innerHTML='<div class="empty">登録スタッフなし</div>';return;}
+  el.innerHTML=DB.staff.map((s,i)=>{
+    const av=s.avatar?`<img src="${s.avatar}">`:`<span style="font-size:14px;font-weight:700;color:var(--b700)">${s.name.charAt(0)}</span>`;
+    return `<div class="srow">
+      <div class="av">${av}</div>
+      <div class="si"><div class="sn">${s.name}</div><div class="sid">ID: ${s.id}${s.email?' | '+s.email:''}</div></div>
+      <button class="btn bo bsm" onclick="openEdit(${i})" style="margin-right:5px">編集</button>
+      <button class="btn bd bsm" onclick="delStaff(${i})">削除</button>
+    </div>`;
+  }).join('');
+}
+function openEdit(i){
+  const s=DB.staff[i];
+  document.getElementById('edit-idx').value=i;
+  document.getElementById('ep').value='';
+  document.getElementById('ee').value=s.email||'';
+  document.getElementById('eav-data').value=s.avatar||'';
+  const w=document.getElementById('eav-wrap');
+  w.innerHTML=s.avatar?`<img src="${s.avatar}">`:`<span style="font-size:22px;color:var(--b400)">+</span><span class="avlb">写真を変更</span>`;
+  openMo('mo-edit');
+}
+function saveEdit(){
+  const i=parseInt(document.getElementById('edit-idx').value);
+  const pw=document.getElementById('ep').value;
+  const em=document.getElementById('ee').value;
+  const av=document.getElementById('eav-data').value;
+  if(pw) DB.staff[i].pass=pw;
+  DB.staff[i].email=em; DB.staff[i].avatar=av;
+  saveDB(); renderStaff(); closeMo('mo-edit'); toast('スタッフ情報を更新しました');
+}
+function delStaff(i){
+  if(!confirm(DB.staff[i].name+' を削除しますか？')) return;
+  DB.staff.splice(i,1); saveDB(); renderStaff(); populateSels(); toast('スタッフを削除しました');
+}
+function addStaff(){
+  const nm=document.getElementById('nn').value.trim();
+  const id=document.getElementById('ni').value.trim();
+  const pw=document.getElementById('np').value;
+  const em=document.getElementById('ne').value.trim();
+  const av=document.getElementById('nav-data').value;
+  const er=document.getElementById('naerr');
+  if(!nm||!/^\d{6}$/.test(id)||!pw){er.textContent='IDは6桁の数字・氏名・パスワードは必須です';er.classList.add('on');return;}
+  if(DB.staff.find(s=>s.id===id)){er.textContent='このIDはすでに使用されています';er.classList.add('on');return;}
+  er.classList.remove('on');
+  DB.staff.push({id,name:nm,pass:pw,email:em,avatar:av}); saveDB();
+  ['nn','ni','np','ne'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('nav-data').value='';
+  document.getElementById('nav-wrap').innerHTML=`<span style="font-size:22px;color:var(--b400)">+</span><span class="avlb">写真を<br>追加</span>`;
+  renderStaff(); populateSels(); toast(nm+' を登録しました');
+}
+
+/* ---- お知らせ ---- */
+function renderMsgList(){
+  const el=document.getElementById('mlist');
+  if(!DB.messages.length){el.innerHTML='<div class="empty">登録なし</div>';return;}
+  const td=today();
+  el.innerHTML=DB.messages.map((m,i)=>{
+    const tl=m.target==='ALL'?'全員':(DB.staff.find(s=>s.id===m.target)?.name||m.target);
+    const tb=m.type==='fixed'?'<span class="bdf">固定</span>':`<span class="bdt">期間: ${m.dateFrom}〜${m.dateTo}</span>`;
+    const exp=m.type==='timed'&&td>m.dateTo;
+    return `<div class="mrow" style="${exp?'opacity:.4':''}">
+      <div class="mmeta">${tb}<span>→ ${tl}</span>${exp?'<span style="color:var(--r)">期限切れ</span>':''}</div>
+      <div class="mbody"><span style="flex:1;line-height:1.6">${m.content}</span><button class="btn bd bsm" onclick="delMsg(${i})">削除</button></div>
+    </div>`;
+  }).join('');
+}
+function addMsg(all=false){
+  const tgt=all?'ALL':document.getElementById('msg-tgt').value;
+  const type=document.getElementById('msg-type').value;
+  const body=document.getElementById('msg-body').value.trim();
+  const er=document.getElementById('merr');
+  if(!tgt){er.textContent='対象を選択してください';er.classList.add('on');return;}
+  if(!body){er.textContent='内容を入力してください';er.classList.add('on');return;}
+  let df='',dt='';
+  if(type==='timed'){
+    df=document.getElementById('msg-from').value.trim();
+    dt=document.getElementById('msg-to').value.trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(df)||!/^\d{4}-\d{2}-\d{2}$/.test(dt)){er.textContent='日付を正しく入力してください';er.classList.add('on');return;}
+  }
+  er.classList.remove('on');
+  DB.messages.push({target:tgt,type,dateFrom:df,dateTo:dt,content:body}); saveDB();
+  document.getElementById('msg-body').value=''; renderMsgList();
+  toast(all?'全員にお知らせを登録しました':'お知らせを登録しました');
+}
+function delMsg(i){DB.messages.splice(i,1);saveDB();renderMsgList();toast('お知らせを削除しました');}
+
+/* ---- シフト ---- */
+function addShift(){
+  const sid=document.getElementById('sh-staff').value;
+  const dt=document.getElementById('sh-date').value.trim();
+  const si=document.getElementById('sh-in').value;
+  const so=document.getElementById('sh-out').value;
+  const er=document.getElementById('sherr');
+  if(!sid||!/^\d{4}-\d{2}-\d{2}$/.test(dt)||!si||!so){er.textContent='全項目を入力・選択してください';er.classList.add('on');return;}
+  er.classList.remove('on');
+  const ei=DB.shifts.findIndex(s=>s.staffId===sid&&s.date===dt);
+  if(ei>=0) DB.shifts[ei]={staffId:sid,date:dt,inTime:si,outTime:so};
+  else DB.shifts.push({staffId:sid,date:dt,inTime:si,outTime:so});
+  saveDB(); renderShiftTable();
+  sendGAS({action:'syncShifts',shifts:DB.shifts,notifyEmail:DB.notifyEmail,notifyTolerance:DB.notifyTolerance});
+  toast('シフトを登録しました');
+}
+function delShift(staffId,date){
+  DB.shifts=DB.shifts.filter(s=>!(s.staffId===staffId&&s.date===date));
+  saveDB(); renderShiftTable(); toast('シフトを削除しました');
+}
+function importCSV(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    let cnt=0;
+    lines.forEach(line=>{
+      const cols=line.split(',').map(c=>c.trim().replace(/"/g,''));
+      if(cols.length<4) return;
+      const [sid,dt,si,so]=cols;
+      if(!/^\d{6}$/.test(sid)||!/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
+      if(!DB.staff.find(s=>s.id===sid)) return;
+      const ei=DB.shifts.findIndex(s=>s.staffId===sid&&s.date===dt);
+      if(ei>=0) DB.shifts[ei]={staffId:sid,date:dt,inTime:si,outTime:so};
+      else DB.shifts.push({staffId:sid,date:dt,inTime:si,outTime:so});
+      cnt++;
+    });
+    saveDB(); renderShiftTable();
+    sendGAS({action:'syncShifts',shifts:DB.shifts,notifyEmail:DB.notifyEmail,notifyTolerance:DB.notifyTolerance});
+    toast(cnt+'件のシフトをインポートしました'); inp.value='';
+  };
+  r.readAsText(f,'UTF-8');
+}
+
+/* シフトテーブル表示 */
+function shiftMonthOffset(d){shiftViewOffset+=d;renderShiftCal();}
+function renderShiftTable(){renderShiftCal();}
+
+/* ---- タブ ---- */
+function atab(el,id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  ['ta-active','ta-staff','ta-msg','ta-shift','ta-settings'].forEach(x=>{
+    document.getElementById(x).style.display=x===id?'block':'none';
+  });
+  if(id==='ta-active'){renderActive();renderAdminShiftToday();}
+  if(id==='ta-shift'){shSubTab('cal');renderShiftCal();}
+}
+
+/* ---- シフト サブタブ ---- */
+let selCalDate=null;
+function shSubTab(pane){
+  ['cal','quick','csv'].forEach(p=>{
+    document.getElementById('sh-pane-'+p).style.display=p===pane?'block':'none';
+    const btn=document.getElementById('shtab-'+p);
+    if(p===pane){btn.style.background='var(--b600)';btn.style.color='#fff';btn.style.borderColor='var(--b700)';}
+    else{btn.style.background='transparent';btn.style.color='var(--b600)';btn.style.borderColor='var(--b300)';}
+  });
+  if(pane==='cal') renderShiftCal();
+}
+
+/* ---- シフトカレンダー ---- */
+function renderShiftCal(){
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+shiftViewOffset,1);
+  const yr=base.getFullYear(), mo=base.getMonth()+1;
+  document.getElementById('shift-month-label').textContent=yr+'年'+mo+'月';
+  const prefix=yr+'-'+pad(mo);
+  const daysInMonth=new Date(yr,mo,0).getDate();
+  const firstDow=base.getDay(); // 0=Sun
+  const DOW=['日','月','火','水','木','金','土'];
+  let html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  // ヘッダー行
+  html+='<tr>';
+  DOW.forEach((d,i)=>{
+    const col=i===0?'#DC2626':i===6?'#2563EB':'var(--tx2)';
+    html+=`<th style="padding:4px 0;text-align:center;color:${col};font-weight:700;font-size:11px">${d}</th>`;
+  });
+  html+='</tr><tr>';
+  // 空白
+  for(let i=0;i<firstDow;i++) html+='<td></td>';
+  let dow=firstDow;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=yr+'-'+pad(mo)+'-'+pad(d);
+    const dayShifts=DB.shifts.filter(s=>s.date===dateStr);
+    const isToday=dateStr===today();
+    const isSel=dateStr===selCalDate;
+    const hasShift=dayShifts.length>0;
+    const dow0=new Date(yr,mo-1,d).getDay();
+    const txcol=dow0===0?'#DC2626':dow0===6?'#2563EB':'var(--tx)';
+    const bg=isSel?'var(--b600)':isToday?'var(--b100)':'transparent';
+    const tcol=isSel?'#fff':txcol;
+    html+=`<td style="padding:3px 1px;text-align:center;vertical-align:top;cursor:pointer" onclick="selectCalDate('${dateStr}')">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;border:${isToday&&!isSel?'1.5px solid var(--b400)':'none'}">
+        <span style="color:${tcol};font-weight:${isToday?700:400};font-size:12px;line-height:1">${d}</span>
+        ${hasShift?`<span style="width:5px;height:5px;border-radius:50%;background:${isSel?'#fff':'var(--g)'};display:block;margin-top:1px"></span>`:'<span style="width:5px;height:5px;display:block"></span>'}
+      </div>
+    </td>`;
+    dow++;
+    if(dow===7&&d<daysInMonth){html+='</tr><tr>';dow=0;}
+  }
+  // 残り
+  while(dow%7!==0&&dow>0){html+='<td></td>';dow++;}
+  html+='</tr></table>';
+  document.getElementById('shift-cal-grid').innerHTML=html;
+  // 選択日の詳細更新
+  if(selCalDate) showCalDayDetail(selCalDate);
+}
+
+function selectCalDate(dateStr){
+  selCalDate=dateStr;
+  renderShiftCal();
+  showCalDayDetail(dateStr);
+}
+
+function showCalDayDetail(dateStr){
+  const detail=document.getElementById('shift-day-detail');
+  const dtLabel=document.getElementById('shift-detail-date');
+  const list=document.getElementById('shift-detail-list');
+  detail.style.display='block';
+  dtLabel.textContent=fmtDate(dateStr)+'のシフト';
+  const dayShifts=DB.shifts.filter(s=>s.date===dateStr);
+  if(!dayShifts.length){
+    list.innerHTML='<div class="empty" style="font-size:12px">この日のシフトなし</div>';
+  } else {
+    list.innerHTML=dayShifts.map(sh=>{
+      const st=DB.staff.find(x=>x.id===sh.staffId);
+      const nm=st?st.name:sh.staffId;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--br);font-size:13px">
+        <span style="font-weight:600;color:var(--tx)">${nm}</span>
+        <span style="color:var(--tx3)">${sh.inTime}〜${sh.outTime}</span>
+        <button class="btn bd bsm" onclick="delShift('${sh.staffId}','${sh.date}');showCalDayDetail('${sh.date}')" style="font-size:11px;padding:3px 8px">削除</button>
+      </div>`;
+    }).join('');
+  }
+}
+
+function addShiftFromCal(){
+  const sid=document.getElementById('sh-staff').value;
+  const si=document.getElementById('sh-in').value;
+  const so=document.getElementById('sh-out').value;
+  const er=document.getElementById('sherr');
+  if(!selCalDate){er.textContent='カレンダーから日付を選択してください';er.classList.add('on');return;}
+  if(!sid||!si||!so){er.textContent='スタッフ・出勤・退勤を選択してください';er.classList.add('on');return;}
+  er.classList.remove('on');
+  const ei=DB.shifts.findIndex(s=>s.staffId===sid&&s.date===selCalDate);
+  if(ei>=0) DB.shifts[ei]={staffId:sid,date:selCalDate,inTime:si,outTime:so};
+  else DB.shifts.push({staffId:sid,date:selCalDate,inTime:si,outTime:so});
+  saveDB(); renderShiftCal(); showCalDayDetail(selCalDate);
+  sendGAS({action:'syncShifts',shifts:DB.shifts,notifyEmail:DB.notifyEmail,notifyTolerance:DB.notifyTolerance});
+  toast('シフトを登録しました');
+}
+
+/* ---- 簡易シフト登録 ---- */
+function quickRegisterShift(){
+  const sid=document.getElementById('sq-staff').value;
+  const from=document.getElementById('sq-from').value.trim();
+  const to=document.getElementById('sq-to').value.trim();
+  const si=document.getElementById('sq-in').value;
+  const so=document.getElementById('sq-out').value;
+  const er=document.getElementById('sqerr');
+  const checked=[...document.querySelectorAll('#sq-days input:checked')].map(x=>parseInt(x.value));
+  if(!sid){er.textContent='スタッフを選択してください';er.classList.add('on');return;}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(from)||!/^\d{4}-\d{2}-\d{2}$/.test(to)){er.textContent='開始日・終了日を入力してください';er.classList.add('on');return;}
+  if(!si||!so){er.textContent='出勤・退勤時刻を選択してください';er.classList.add('on');return;}
+  if(!checked.length){er.textContent='出勤する曜日を1つ以上選択してください';er.classList.add('on');return;}
+  er.classList.remove('on');
+  let cnt=0;
+  const cur=new Date(from);
+  const end=new Date(to);
+  while(cur<=end){
+    const dow=cur.getDay();
+    if(checked.includes(dow)){
+      const dateStr=cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate());
+      const ei=DB.shifts.findIndex(s=>s.staffId===sid&&s.date===dateStr);
+      if(ei>=0) DB.shifts[ei]={staffId:sid,date:dateStr,inTime:si,outTime:so};
+      else DB.shifts.push({staffId:sid,date:dateStr,inTime:si,outTime:so});
+      cnt++;
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  saveDB();
+  sendGAS({action:'syncShifts',shifts:DB.shifts,notifyEmail:DB.notifyEmail,notifyTolerance:DB.notifyTolerance});
+  toast(cnt+'件のシフトを一括登録しました');
+}
+
+/* ---- ログイン画面アクティブボード ---- */
+function renderLoginBoard(){
+  const td=today();
+  const wrap=document.getElementById('login-active-board');
+  const timeEl=document.getElementById('login-board-time');
+  if(!DB.staff.length){wrap.innerHTML='<div class="empty">スタッフ未登録</div>';return;}
+  const now=new Date();
+  timeEl.textContent=pad(now.getHours())+':'+pad(now.getMinutes())+' 更新';
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+  DB.staff.forEach(s=>{
+    const key=s.id+'_'+td;
+    const logs=DB.logs[key]||[];
+    const last=logs.length?logs[logs.length-1]:null;
+    const inL=logs.find(l=>l.type==='出勤');
+    let cls='aoff',stxt='未出勤',scol='var(--tx3)',bg='var(--sf2)',bc='var(--br)';
+    if(last){
+      if(last.type==='出勤'){cls='ain';stxt='出勤中';scol='var(--gd)';bg='#ECFDF5';bc='#6EE7B7';}
+      else if(last.type==='退勤'){stxt='退勤済';scol='var(--rd)';bg='#FEF2F2';bc='#FCA5A5';}
+      else{stxt='早退済';scol='var(--amd)';bg='#FFFBEB';bc='#FCD34D';}
+    }
+    const av=s.avatar
+      ?`<img src="${s.avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      :`<div style="width:28px;height:28px;border-radius:50%;background:var(--b100);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--b700);flex-shrink:0">${s.name.charAt(0)}</div>`;
+    html+=`<div style="background:${bg};border:1px solid ${bc};border-radius:var(--ra);padding:8px 10px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">${av}<span style="font-size:12px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${s.name}</span></div>
+      <div style="font-size:11px;font-weight:600;color:${scol}">${stxt}</div>
+      ${inL?`<div style="font-size:10px;color:var(--tx3);font-variant-numeric:tabular-nums">出勤: ${inL.time}</div>`:''}
+    </div>`;
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
+/* ---- キーボード（DOMContentLoaded内で登録） ---- */
+window.addEventListener('DOMContentLoaded', function(){
+  try {
+    document.getElementById('lp').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+    document.getElementById('li').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+    document.getElementById('ap').addEventListener('keydown',function(e){if(e.key==='Enter')doAdminLogin();});
+  } catch(e){}
+});
+
+/* ---- 時刻セレクト初期化 ---- */
+function buildTimeOpts(){
+  let o='<option value="">選択...</option>';
+  for(let h=0;h<24;h++) for(let m=0;m<60;m+=30){
+    const v=pad(h)+':'+pad(m); o+='<option value="'+v+'">'+v+'</option>';
+  }
+  return o;
+}
+
+/* ---- DOM準備完了後に実行 ---- */
+window.addEventListener('DOMContentLoaded', function(){
+  try {
+    const timeHtml = buildTimeOpts();
+    ['sh-in','sh-out','sq-in','sq-out'].forEach(function(id){
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = timeHtml;
+    });
+
+    const mf = document.getElementById('msg-from');
+    const mt = document.getElementById('msg-to');
+    if(mf) mf.value = today();
+    if(mt) mt.value = today();
+
+    const now = new Date();
+    const yr = now.getFullYear(), mo = now.getMonth()+1;
+    const last = new Date(yr, mo, 0).getDate();
+    const sqf = document.getElementById('sq-from');
+    const sqt = document.getElementById('sq-to');
+    if(sqf) sqf.value = yr+'-'+pad(mo)+'-01';
+    if(sqt) sqt.value = yr+'-'+pad(mo)+'-'+pad(last);
+
+    renderLoginBoard();
+    setInterval(renderLoginBoard, 10000); // 10秒ごとに更新
+  } catch(e) { console.error('初期化エラー:', e); }
+});
+</script>
+</body>
+</html>
