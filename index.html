@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -374,8 +375,11 @@ select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:u
       <label>GAS WebアプリURL</label>
       <input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/...">
       <div class="gnote">デプロイURLを貼り付けると打刻データが自動でスプレッドシートに記録されます。</div>
-      <button class="btn bo" onclick="testGAS()" style="margin-top:.75rem;font-size:13px">接続テスト</button>
-      <div id="gas-test-result" style="font-size:12px;margin-top:6px;display:none;padding:8px;border-radius:var(--rsm)"></div>
+      <div style="display:flex;gap:8px;margin-top:.75rem">
+        <button class="btn bo bsm" onclick="testGAS()" style="flex:1;padding:10px;font-size:13px;margin-top:0">🔗 接続テスト</button>
+      </div>
+      <div id="gas-test-result" style="font-size:12px;margin-top:8px;display:none;padding:10px;border-radius:var(--rsm);line-height:1.6"></div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:6px;line-height:1.6">接続エラーの場合、管理者メールに通知が届きます（5分ごと自動チェック）</div>
     </div>
     <div class="slb" style="margin-top:.75rem">Gmailシフトズレ通知</div>
     <div class="card">
@@ -392,6 +396,24 @@ select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:u
     </div>
     <button class="btn bg" onclick="saveSettings()">設定を保存する</button>
     <div id="save-ok" style="font-size:13px;color:var(--g);margin-top:8px;display:none;text-align:center;font-weight:600">✓ 設定を保存しました</div>
+
+    <div class="slb" style="margin-top:1.25rem">月次勤怠集計</div>
+    <div class="card">
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:.75rem;line-height:1.6">打刻記録をもとにスプレッドシートの月次勤怠シートを集計します。休憩時間は労働基準法に基づき自動計算。</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="margin-top:0">集計年</label><select id="agg-year"></select></div>
+        <div><label style="margin-top:0">集計月</label>
+          <select id="agg-month">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option>
+            <option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option>
+            <option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn bp" onclick="runAggregate()" style="margin-top:.75rem">集計を実行する</button>
+      <div id="agg-result" style="font-size:13px;margin-top:8px;display:none;padding:10px;border-radius:var(--rsm);line-height:1.6"></div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:6px;line-height:1.6">休憩: 6時間超→45分 / 8時間超→60分（自動）<br>スプレッドシートの「YYYY年M月_勤怠」シートに1人1行で集計</div>
+    </div>
   </div>
 
   <button class="btn" style="margin-top:.5rem" onclick="adminLogout()">ログアウト</button>
@@ -411,6 +433,15 @@ select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:u
   <!-- 本日のお知らせ -->
   <div id="u-notice"></div>
 
+  <!-- シフトカレンダー＋出勤状況 -->
+  <div style="display:flex;gap:8px;margin-bottom:.75rem;align-items:center">
+    <button class="btn bo bsm" id="btn-mycal" onclick="showUserCal()" style="flex:1;margin-top:0;font-size:12px;padding:8px">📅 シフトを確認</button>
+    <button class="btn bo bsm" id="btn-allstatus" onclick="toggleAllStatus()" style="flex:1;margin-top:0;font-size:12px;padding:8px">👥 全員の状況</button>
+  </div>
+  <!-- マイシフトカレンダー（トグル） -->
+  <div id="u-mycal" style="display:none;margin-bottom:.75rem"></div>
+  <!-- 全員状況（トグル） -->
+  <div id="u-allstatus" style="display:none;margin-bottom:.75rem"></div>
   <!-- 本日の出勤予定メンバーとアクティブ状況 -->
   <div id="u-today-info"></div>
 
@@ -497,7 +528,7 @@ let shiftViewOffset = 0;
 
 function defDB(){
   return {
-    adminPass:'admin1234', gasUrl:'', notifyEmail:'', notifyTolerance:'15',
+    adminPass:'admin1234', gasUrl:'https://script.google.com/macros/s/AKfycbztq2RD00K_8fNwykQU_9x9yIdyu0DCCS3HwzduPYiaMeg4_og40puohiYRVlqA9PoWVA/exec', notifyEmail:'', notifyTolerance:'15',
     staff:[
       {id:'000001',name:'山田 太郎',pass:'pass01',email:'',avatar:''},
       {id:'000002',name:'鈴木 花子',pass:'pass02',email:'',avatar:''},
@@ -506,7 +537,18 @@ function defDB(){
     messages:[], shifts:[], logs:{}
   };
 }
-function loadDB(){try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return defDB();}
+function loadDB(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const db=JSON.parse(r);
+      // GAS URLが空の場合はデフォルトを補完
+      if(!db.gasUrl) db.gasUrl='https://script.google.com/macros/s/AKfycbztq2RD00K_8fNwykQU_9x9yIdyu0DCCS3HwzduPYiaMeg4_og40puohiYRVlqA9PoWVA/exec';
+      return db;
+    }
+  }catch(e){}
+  return defDB();
+}
 function saveDB(){try{localStorage.setItem(SK,JSON.stringify(DB));}catch(e){}}
 
 let DB=loadDB(), me=null, pendingPunch=null, clkIv=null, logoutIv=null;
@@ -586,7 +628,12 @@ function enterPunch(){
   // 本日の出勤予定＋アクティブ状況
   renderUserTodayInfo();
   document.getElementById('clkd').textContent=fmtDate(td);
-  updStatus(); rendLog(); startClk(); show('sc-punch');
+  updStatus(); rendLog(); startClk();
+  userCalOpen=false; allStatusOpen=false; userCalOffset=0;
+  document.getElementById('u-mycal').style.display='none';
+  document.getElementById('u-allstatus').style.display='none';
+  if(DB.gasUrl) startGASCheck();
+  show('sc-punch');
 }
 
 /* ユーザー画面：本日の出勤予定メンバーとアクティブ状況 */
@@ -797,28 +844,82 @@ function refreshAdmin(){
   document.getElementById('ntf-tol').value=DB.notifyTolerance||'15';
 }
 
-async function testGAS(){
-  const url = document.getElementById('gas-url').value.trim();
-  const res_el = document.getElementById('gas-test-result');
-  res_el.style.display='block';
-  res_el.style.background='#FEF3C7';
-  res_el.style.border='1px solid #FCD34D';
-  res_el.style.color='#92400E';
-  res_el.textContent='接続中...';
-  if(!url){ res_el.textContent='URLを入力してください'; return; }
+let gasCheckInterval=null;
+/* ---- 集計実行 ---- */
+async function runAggregate(){
+  const yr  = parseInt(document.getElementById('agg-year').value, 10);
+  const mo  = parseInt(document.getElementById('agg-month').value, 10);
+  const res = document.getElementById('agg-result');
+  res.style.display='block';
+  res.style.background='#FEF3C7';
+  res.style.border='1px solid #FCD34D';
+  res.style.color='#92400E';
+  res.textContent='集計中... しばらくお待ちください';
+  if(!DB.gasUrl){ res.textContent='GAS URLが設定されていません'; res.style.background='#FEF2F2'; return; }
   try{
-    const testUrl = url + '?data=' + encodeURIComponent(JSON.stringify({action:'test'}));
-    await fetch(testUrl, {method:'GET', mode:'no-cors'});
-    res_el.style.background='#ECFDF5';
-    res_el.style.border='1px solid #6EE7B7';
-    res_el.style.color='#065F46';
-    res_el.textContent='✓ GASに到達しました。スプレッドシートへの書き込みはGAS側のログで確認してください。';
+    const payload = {action:'aggregate', year:yr, month:mo, staff:DB.staff};
+    const url = DB.gasUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
+    const r = await fetch(url, {method:'GET', mode:'cors'});
+    const json = await r.json();
+    if(json.status==='ok'){
+      res.style.background='#ECFDF5';
+      res.style.border='1px solid #6EE7B7';
+      res.style.color='#065F46';
+      res.textContent='✓ ' + (json.message||'集計完了');
+    } else {
+      res.style.background='#FEF2F2';
+      res.style.border='1px solid #FECACA';
+      res.style.color='#b91c1c';
+      res.textContent='エラー: ' + (json.message||'不明');
+    }
   } catch(e){
-    res_el.style.background='#FEF2F2';
-    res_el.style.border='1px solid #FECACA';
-    res_el.style.color='#b91c1c';
-    res_el.textContent='エラー: ' + e.message;
+    // no-corsで再試行
+    try{
+      const url2 = DB.gasUrl + '?data=' + encodeURIComponent(JSON.stringify({action:'aggregate',year:yr,month:mo,staff:DB.staff}));
+      await fetch(url2,{method:'GET',mode:'no-cors'});
+      res.style.background='#ECFDF5';
+      res.style.border='1px solid #6EE7B7';
+      res.style.color='#065F46';
+      res.textContent='✓ 集計リクエストを送信しました。スプレッドシートを確認してください。';
+    } catch(e2){
+      res.style.background='#FEF2F2';
+      res.style.border='1px solid #FECACA';
+      res.style.color='#b91c1c';
+      res.textContent='送信エラー: GAS URLを確認してください';
+    }
   }
+}
+
+async function testGAS(){
+  const url=(document.getElementById('gas-url')||{}).value||DB.gasUrl||'';
+  const res_el=document.getElementById('gas-test-result');
+  if(res_el){ res_el.style.display='block'; res_el.style.background='#FEF3C7'; res_el.style.border='1px solid #FCD34D'; res_el.style.color='#92400E'; res_el.textContent='接続確認中...'; }
+  if(!url){ if(res_el) res_el.textContent='GAS URLを入力してください'; return false; }
+  try{
+    const testUrl=url+'?data='+encodeURIComponent(JSON.stringify({action:'test'}));
+    await fetch(testUrl,{method:'GET',mode:'no-cors'});
+    if(res_el){ res_el.style.background='#ECFDF5'; res_el.style.border='1px solid #6EE7B7'; res_el.style.color='#065F46'; res_el.textContent='✓ GAS接続OK — スプレッドシートへの書き込みは正常です'; }
+    return true;
+  } catch(e){
+    if(res_el){ res_el.style.background='#FEF2F2'; res_el.style.border='1px solid #FECACA'; res_el.style.color='#b91c1c'; res_el.textContent='⚠️ 接続エラー: URLを確認してください'; }
+    // エラー時はGASにメール通知依頼
+    if(DB.notifyEmail){
+      try{
+        const errUrl=url+'?data='+encodeURIComponent(JSON.stringify({action:'connectionError',email:DB.notifyEmail,time:nowHMS(),date:today()}));
+        await fetch(errUrl,{method:'GET',mode:'no-cors'});
+      }catch(e2){}
+    }
+    return false;
+  }
+}
+function startGASCheck(){
+  // 5分ごとに自動接続チェック
+  if(gasCheckInterval) clearInterval(gasCheckInterval);
+  gasCheckInterval=setInterval(async()=>{
+    if(!DB.gasUrl) return;
+    const ok=await testGAS();
+    if(!ok) console.warn('GAS接続エラーを検知');
+  }, 5*60*1000);
 }
 
 function saveSettings(){
@@ -1170,23 +1271,161 @@ function quickRegisterShift(){
   toast(cnt+'件のシフトを一括登録しました');
 }
 
+/* ---- ユーザー：マイシフトカレンダー ---- */
+let userCalOpen=false, allStatusOpen=false, userCalOffset=0;
+function showUserCal(){
+  userCalOpen=!userCalOpen;
+  const el=document.getElementById('u-mycal');
+  const btn=document.getElementById('btn-mycal');
+  if(!userCalOpen){el.style.display='none';btn.style.background='transparent';return;}
+  el.style.display='block';
+  btn.style.background='var(--b100)';
+  renderUserCal();
+}
+function renderUserCal(){
+  const el=document.getElementById('u-mycal');
+  const now=new Date();
+  const base=new Date(now.getFullYear(),now.getMonth()+userCalOffset,1);
+  const yr=base.getFullYear(), mo=base.getMonth()+1;
+  const daysInMonth=new Date(yr,mo,0).getDate();
+  const firstDow=base.getDay();
+  const DOW=['日','月','火','水','木','金','土'];
+  const prefix=yr+'-'+pad(mo);
+  const myShifts=DB.shifts.filter(s=>s.staffId===me.id&&s.date.startsWith(prefix));
+  const td=today();
+  let html=`<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--ra);padding:1rem;box-shadow:var(--sh)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <button class="btn bo bsm" onclick="userCalOffset--;renderUserCal()" style="margin-top:0;padding:5px 10px">◀</button>
+      <span style="font-size:14px;font-weight:700;color:var(--b800)">${yr}年${mo}月</span>
+      <button class="btn bo bsm" onclick="userCalOffset++;renderUserCal()" style="margin-top:0;padding:5px 10px">▶</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px"><tr>`;
+  DOW.forEach((d,i)=>{
+    const col=i===0?'#DC2626':i===6?'#2563EB':'var(--tx2)';
+    html+=`<th style="padding:3px 0;text-align:center;color:${col};font-weight:700;font-size:11px">${d}</th>`;
+  });
+  html+='</tr><tr>';
+  for(let i=0;i<firstDow;i++) html+='<td></td>';
+  let dow=firstDow;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=yr+'-'+pad(mo)+'-'+pad(d);
+    const sh=myShifts.find(s=>s.date===ds);
+    const isToday=ds===td;
+    const dow0=new Date(yr,mo-1,d).getDay();
+    const txcol=dow0===0?'#DC2626':dow0===6?'#2563EB':'var(--tx)';
+    const hasSh=!!sh;
+    const bg=isToday?'var(--b600)':'transparent';
+    const tc=isToday?'#fff':txcol;
+    html+=`<td style="padding:2px 1px;text-align:center;vertical-align:top">
+      <div style="width:26px;height:26px;border-radius:50%;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;${hasSh&&!isToday?'border:2px solid var(--b400)':''}${hasSh&&isToday?'border:2px solid #fff':''}">
+        <span style="color:${tc};font-weight:${isToday?700:hasSh?600:400};font-size:11px;line-height:1">${d}</span>
+      </div>
+      ${hasSh?`<div style="font-size:9px;color:${isToday?'var(--b700)':'var(--g)'};font-weight:700;line-height:1.2;margin-top:1px">${sh.inTime}</div>`:''}
+    </td>`;
+    dow++;
+    if(dow===7&&d<daysInMonth){html+='</tr><tr>';dow=0;}
+  }
+  html+='</tr></table>';
+  // 今月のシフト一覧
+  if(myShifts.length){
+    html+='<div style="margin-top:.75rem;border-top:1px solid var(--br);padding-top:.75rem">';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--b600);margin-bottom:6px">今月の出勤予定</div>';
+    myShifts.sort((a,b)=>a.date<b.date?-1:1).forEach(sh=>{
+      const nd=new Date(sh.date);
+      const dow2=DOW[nd.getDay()];
+      const isToday2=sh.date===td;
+      html+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--br);font-size:13px;${isToday2?'background:var(--b50);border-radius:6px;padding:5px 8px;':''}">
+        <span style="font-weight:${isToday2?700:500};color:${isToday2?'var(--b700)':'var(--tx)'}">
+          ${isToday2?'📍 ':''}${fmtDate(sh.date)}（${dow2}）
+        </span>
+        <span style="color:var(--tx3);font-variant-numeric:tabular-nums">${sh.inTime}〜${sh.outTime}</span>
+      </div>`;
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* ---- ユーザー：全員の出勤状況 ---- */
+function toggleAllStatus(){
+  allStatusOpen=!allStatusOpen;
+  const el=document.getElementById('u-allstatus');
+  const btn=document.getElementById('btn-allstatus');
+  if(!allStatusOpen){el.style.display='none';btn.style.background='transparent';return;}
+  el.style.display='block';
+  btn.style.background='var(--b100)';
+  renderAllStatus();
+}
+function renderAllStatus(){
+  const td=today();
+  const el=document.getElementById('u-allstatus');
+  const todayShiftIds=DB.shifts.filter(s=>s.date===td).map(s=>s.staffId);
+  const staffOnShift=DB.staff.filter(s=>todayShiftIds.includes(s.id));
+  if(!staffOnShift.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--tx3);text-align:center;padding:8px">本日シフト登録なし</div>';
+    return;
+  }
+  let html='<div style="background:var(--sf);border:1px solid var(--br);border-radius:var(--ra);padding:1rem;box-shadow:var(--sh)">';
+  html+='<div style="font-size:11px;font-weight:700;color:var(--b600);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.75rem">本日の出勤状況</div>';
+  staffOnShift.forEach(s=>{
+    const key=s.id+'_'+td;
+    const logs=DB.logs[key]||[];
+    const last=logs.length?logs[logs.length-1]:null;
+    const inL=logs.find(l=>l.type==='出勤');
+    const sh=DB.shifts.find(x=>x.staffId===s.id&&x.date===td);
+    const isMe=s.id===me.id;
+    let stxt='未出勤',scol='var(--tx3)',bg='var(--sf2)',bc='var(--br)';
+    if(last){
+      if(last.type==='出勤'){stxt='出勤中';scol='var(--gd)';bg='#ECFDF5';bc='#6EE7B7';}
+      else if(last.type==='退勤'){stxt='退勤済';scol='var(--rd)';bg='#FEF2F2';bc='#FCA5A5';}
+      else{stxt='早退済';scol='var(--amd)';bg='#FFFBEB';bc='#FCD34D';}
+    }
+    const av=s.avatar
+      ?`<img src="${s.avatar}" style="width:34px;height:34px;border-radius:50%;object-fit:cover">`
+      :`<div style="width:34px;height:34px;border-radius:50%;background:var(--b100);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--b700)">${s.name.charAt(0)}</div>`;
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:4px;background:${bg};border:1px solid ${bc};border-radius:var(--rsm);${isMe?'border-width:2px;':''}">
+      ${av}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${s.name}${isMe?' 👤':''}</div>
+        ${sh?`<div style="font-size:11px;color:var(--tx3)">${sh.inTime}〜${sh.outTime}</div>`:''}
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:${scol}">${stxt}</div>
+        ${inL?`<div style="font-size:10px;color:var(--tx3);text-align:right">${inL.time}</div>`:''}
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
 /* ---- ログイン画面アクティブボード ---- */
 function renderLoginBoard(){
   const td=today();
   const wrap=document.getElementById('login-active-board');
   const timeEl=document.getElementById('login-board-time');
-  if(!DB.staff.length){wrap.innerHTML='<div class="empty">スタッフ未登録</div>';return;}
+  // 本日シフトがある人のみ
+  const todayShiftIds=DB.shifts.filter(s=>s.date===td).map(s=>s.staffId);
+  const staffOnShift=DB.staff.filter(s=>todayShiftIds.includes(s.id));
+  if(!staffOnShift.length){
+    wrap.innerHTML='<div style="font-size:13px;color:var(--tx3);text-align:center;padding:8px">本日シフト登録なし</div>';
+    const now2=new Date();
+    timeEl.textContent=pad(now2.getHours())+':'+pad(now2.getMinutes())+' 更新';
+    return;
+  }
   const now=new Date();
   timeEl.textContent=pad(now.getHours())+':'+pad(now.getMinutes())+' 更新';
   let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-  DB.staff.forEach(s=>{
+  staffOnShift.forEach(s=>{
+    const sh=DB.shifts.find(x=>x.staffId===s.id&&x.date===td);
     const key=s.id+'_'+td;
     const logs=DB.logs[key]||[];
     const last=logs.length?logs[logs.length-1]:null;
     const inL=logs.find(l=>l.type==='出勤');
-    let cls='aoff',stxt='未出勤',scol='var(--tx3)',bg='var(--sf2)',bc='var(--br)';
+    let stxt='未出勤',scol='var(--tx3)',bg='var(--sf2)',bc='var(--br)';
     if(last){
-      if(last.type==='出勤'){cls='ain';stxt='出勤中';scol='var(--gd)';bg='#ECFDF5';bc='#6EE7B7';}
+      if(last.type==='出勤'){stxt='出勤中';scol='var(--gd)';bg='#ECFDF5';bc='#6EE7B7';}
       else if(last.type==='退勤'){stxt='退勤済';scol='var(--rd)';bg='#FEF2F2';bc='#FCA5A5';}
       else{stxt='早退済';scol='var(--amd)';bg='#FFFBEB';bc='#FCD34D';}
     }
@@ -1196,6 +1435,7 @@ function renderLoginBoard(){
     html+=`<div style="background:${bg};border:1px solid ${bc};border-radius:var(--ra);padding:8px 10px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">${av}<span style="font-size:12px;font-weight:700;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${s.name}</span></div>
       <div style="font-size:11px;font-weight:600;color:${scol}">${stxt}</div>
+      ${sh?`<div style="font-size:10px;color:var(--tx3)">${sh.inTime}〜${sh.outTime}</div>`:''}
       ${inL?`<div style="font-size:10px;color:var(--tx3);font-variant-numeric:tabular-nums">出勤: ${inL.time}</div>`:''}
     </div>`;
   });
@@ -1242,6 +1482,21 @@ window.addEventListener('DOMContentLoaded', function(){
     const sqt = document.getElementById('sq-to');
     if(sqf) sqf.value = yr+'-'+pad(mo)+'-01';
     if(sqt) sqt.value = yr+'-'+pad(mo)+'-'+pad(last);
+
+    // 集計年セレクト初期化
+    const aggYear = document.getElementById('agg-year');
+    if(aggYear){
+      const curYr = now.getFullYear();
+      for(let y=curYr-1; y<=curYr+1; y++){
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y+'年';
+        if(y===curYr) opt.selected = true;
+        aggYear.appendChild(opt);
+      }
+    }
+    // 集計月デフォルトを今月に
+    const aggMonth = document.getElementById('agg-month');
+    if(aggMonth) aggMonth.value = mo;
 
     renderLoginBoard();
     setInterval(renderLoginBoard, 10000); // 10秒ごとに更新
